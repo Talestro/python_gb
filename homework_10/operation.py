@@ -1,6 +1,8 @@
 import csv
 from csv import writer
 import log
+import requests
+import json
 
 table = ['last_name', 'name', 'phone_number', 'post', 'salary']
 
@@ -22,13 +24,16 @@ def find_data(find_request):
         for line in reader:
             if find_request in line:
                 description = dict(zip(table, line))
+                result =""
                 for key, value in description.items():
-                    result = ''.join(f'{key}: {value} \n')
+                    result = result + " " + key + ":" + value + "\n"
+                    print(result)
             else:
                 result = 'данные не найдены'
 
     log_message = f'Поиск данных по запросу: {find_request}'
     log.write_log(log_message)
+    
     return result
 
 
@@ -48,3 +53,12 @@ def delete_data(delete_request):
     log_message = f'Удалены данные по запросу: {delete_request}'
     log.write_log(log_message)
     return log_message
+
+def get_weather (city):
+    response = requests.get(f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid=4321a3d417b53045aa1b6617c529c910&units=metric&lang=ru")
+    a=response.json()
+    tipe_weather = json.dumps(a['weather'][0]['main'])
+    temperature = json.dumps(a['main']['temp'])
+    wind = json.dumps(a['wind']['speed'])
+    result = f"В {city} сегодня : " + tipe_weather + '\n' + "Температура :" + temperature + '\n' + 'Ветер : ' + wind + ' метров в секунду'
+    return result

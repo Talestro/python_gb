@@ -9,6 +9,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 
+
 TOKEN = '5669367414:AAG0NQNbNDDXpFG3D1ZCyrIVv-fNbWj74Uk'
 dp = Dispatcher()
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ class Form(StatesGroup):
     find_data = State()
     dell_data = State()
     #get_mult_line_add = State()
+    city_name =State()
 
 
 @dp.message(Command(commands=['start']))
@@ -37,7 +39,23 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     await message.reply(f'Список комманд:\n'
                          f'Для доступа к работе с телефонным справочником введите /phonebook\n'
                          f'В телефонном справочнике ыв можете добавлять, удалять и искать записи\n\n'
+                         f'Также можно посмотреть погоду в любом городе, для этого нужно ввести /weather\n\n'
                          f'Для получения лога всех операций введите: /log')
+
+
+
+@dp.message(Command(commands=['weather']))
+async def get_city(message: types.Message, state: FSMContext) -> None:
+    await state.set_state(Form.city_name)
+    await message.reply(' В каком городе нужно узнать погоду? '
+                        'введите наименование города на английском языке ',
+                         reply_markup=ReplyKeyboardRemove())
+    
+@dp.message(Form.city_name)
+async def weather_message(message: Message, state: FSMContext) -> None:
+    record = await state.update_data(answer=message.text)
+    record = record['answer']
+    await message.reply(operation.get_weather(record))
 
 
 @dp.message(Command(commands=['phonebook']))
@@ -53,19 +71,20 @@ async def cmd_dialog_root(message: types.Message, state: FSMContext) -> None:
                 ]], resize_keyboard=True,),)
 
 
+# @dp.message(Form.phonebook_menu, F.text.contains('Добавить'))
+# async def cmd_dialog_phonebook(message: types.Message, state: FSMContext) -> None:
+#     await state.set_state(Form.add_type_menu)
+#     await message.reply(
+#         f'Выбирите тип ввода',
+#         reply_markup=ReplyKeyboardMarkup(
+#             keyboard=[[
+#                     KeyboardButton(text='Однострочный'),
+#                     KeyboardButton(text='Многострочный'),
+#                 ]], resize_keyboard=True,),)
+
+
+#@dp.message(Form.add_type_menu, F.text.contains('Однострочный'))
 @dp.message(Form.phonebook_menu, F.text.contains('Добавить'))
-async def cmd_dialog_phonebook(message: types.Message, state: FSMContext) -> None:
-    await state.set_state(Form.add_type_menu)
-    await message.reply(
-        f'Выбирите тип ввода',
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[
-                    KeyboardButton(text='Однострочный'),
-                    KeyboardButton(text='Многострочный'),
-                ]], resize_keyboard=True,),)
-
-
-@dp.message(Form.add_type_menu, F.text.contains('Однострочный'))
 async def one_line_add(message: Message, state: FSMContext) -> None:
     await state.set_state(Form.get_one_line_add)
     await message.reply('Введите фамилию, имя, номер телефона, '
@@ -79,19 +98,7 @@ async def process_message(message: Message, state: FSMContext) -> None:
     record = record['answer'].split(',')
     await message.reply(operation.add_data(record))
 
-
-# @dp.message(Form.add_type_menu, F.text.contains('Многострочный'))
-# async def mult_line_add(message: Message, state: FSMContext) -> None:
-#     await state.set_state(Form.get_mult_line_add)
-#     await message.reply('Вводите данные по мере запросов', reply_markup=ReplyKeyboardRemove())
-#
-
-# @dp.message(Form.get_mult_line_add)
-# async def process_message(message: Message, state: FSMContext) -> None:
-#     for i in operation.table:
-#         record = [input(f'{i} :') for i in operation.table]
-#     await state.update_data(answer=message.text)
-#     await message.reply(operation.find_data(find_request['answer']))
+ 
 
 
 @dp.message(Form.phonebook_menu, F.text.contains('Найти'))
